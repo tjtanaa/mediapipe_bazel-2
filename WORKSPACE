@@ -299,3 +299,47 @@ maven_install(
     fetch_sources = True,
     version_conflict_policy = "pinned",
 )
+
+
+# credited to  https://github.com/NuxiNL/bazel-third-party
+
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+git_repository(
+    name = "org_cloudabi_bazel_third_party",
+    commit = "91ca2167219c612a89334fa09ddf15fbdc5d0592",
+    remote = "https://github.com/NuxiNL/bazel-third-party.git",
+)
+
+load("@org_cloudabi_bazel_third_party//:third_party.bzl", "third_party_repositories")
+
+third_party_repositories()
+
+# credited to https://github.com/kgreenek/rules_pcl
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+http_archive(
+    name = "rules_pcl",
+    url = "https://github.com/kgreenek/rules_pcl/archive/v1.0.0.tar.gz",
+    sha256 = "91f224f1e76110a1478fae9f50f3a86821cb016b81f0abf5693dc7a9a3e0bfc7",
+    strip_prefix = "rules_pcl-1.0.0",
+)
+
+load("@rules_pcl//bzl:repositories.bzl", "pcl_repositories")
+pcl_repositories()
+
+# NOTE: This must be loaded after the call to pcl_repositories().
+load("@rules_pcl//bzl:init_deps.bzl", "pcl_init_deps")
+pcl_init_deps()
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# Eigen
+http_archive(
+    name = "eigen",
+    build_file = "//:eigen.BUILD",
+    sha256 = "3a66f9bfce85aff39bc255d5a341f87336ec6f5911e8d816dd4a3fdc500f8acf",
+    url = "https://bitbucket.org/eigen/eigen/get/c5e90d9.tar.gz",
+    strip_prefix="eigen-eigen-c5e90d9e764e"
+)

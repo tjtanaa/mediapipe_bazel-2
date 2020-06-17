@@ -1,0 +1,83 @@
+# MediaPipe graph that performs GPU Sobel edge detection on a live video stream.
+# Used in the examples in
+# mediapipe/examples/android/src/java/com/mediapipe/apps/edgedetectiongpu and
+# mediapipe/examples/ios/edgedetectiongpu.
+
+# Point cloud coming into the model with (1, 65536, 3)
+# Point cloud coming out of the model (65536*8) segmentation softmax_linear
+input_stream: "POINT_CLOUD:point_cloud_tensor"
+output_stream: "PROB_LOGITS:softmax_linear"
+
+
+# Preprocess the point cloud into tensors that the RandLA-Net inference node takes
+node {
+    calculator: "PointCloudToRandlanetFormatCalculator"
+    input_stream: "POINT_CLOUD:point_cloud_tensor"
+    output_stream: "NEIGHBOR_INDEX_0:neighbor_index_0_tensor"
+    output_stream: "NEIGHBOR_INDEX_1:neighbor_index_1_tensor"
+    output_stream: "NEIGHBOR_INDEX_2:neighbor_index_2_tensor"
+    output_stream: "NEIGHBOR_INDEX_3:neighbor_index_3_tensor"
+    output_stream: "NEIGHBOR_INDEX_4:neighbor_index_4_tensor"
+    output_stream: "POOL_I_0:pool_i_0_tensor"
+    output_stream: "POOL_I_1:pool_i_1_tensor"
+    output_stream: "POOL_I_2:pool_i_2_tensor"
+    output_stream: "POOL_I_3:pool_i_3_tensor"
+    output_stream: "POOL_I_4:pool_i_4_tensor"
+    output_stream: "UP_I_0:up_i_0_tensor"
+    output_stream: "UP_I_1:up_i_1_tensor"
+    output_stream: "UP_I_2:up_i_2_tensor"
+    output_stream: "UP_I_3:up_i_3_tensor"
+    output_stream: "UP_I_4:up_i_4_tensor"
+    output_stream: "BATCH_XYZ_0:batch_xyz_0_tensor"
+    output_stream: "BATCH_XYZ_1:batch_xyz_1_tensor"
+    output_stream: "BATCH_XYZ_2:batch_xyz_2_tensor"
+    output_stream: "BATCH_XYZ_3:batch_xyz_3_tensor"
+    output_stream: "BATCH_XYZ_4:batch_xyz_4_tensor"
+    output_stream: "BATCH_FEATURE:batch_feature_tensor"
+}
+
+# RandLA-Net inference node
+node {
+calculator: "TensorFlowInferenceCalculator"
+input_side_packet: "SESSION:tf_model"
+input_stream: "NEIGHBOR_INDEX_0:neighbor_index_0_tensor"
+input_stream: "NEIGHBOR_INDEX_1:neighbor_index_1_tensor"
+input_stream: "NEIGHBOR_INDEX_2:neighbor_index_2_tensor"
+input_stream: "NEIGHBOR_INDEX_3:neighbor_index_3_tensor"
+input_stream: "NEIGHBOR_INDEX_4:neighbor_index_4_tensor"
+input_stream: "POOL_I_0:pool_i_0_tensor"
+input_stream: "POOL_I_1:pool_i_1_tensor"
+input_stream: "POOL_I_2:pool_i_2_tensor"
+input_stream: "POOL_I_3:pool_i_3_tensor"
+input_stream: "POOL_I_4:pool_i_4_tensor"
+input_stream: "UP_I_0:up_i_0_tensor"
+input_stream: "UP_I_1:up_i_1_tensor"
+input_stream: "UP_I_2:up_i_2_tensor"
+input_stream: "UP_I_3:up_i_3_tensor"
+input_stream: "UP_I_4:up_i_4_tensor"
+input_stream: "BATCH_XYZ_0:batch_xyz_0_tensor"
+input_stream: "BATCH_XYZ_1:batch_xyz_1_tensor"
+input_stream: "BATCH_XYZ_2:batch_xyz_2_tensor"
+input_stream: "BATCH_XYZ_3:batch_xyz_3_tensor"
+input_stream: "BATCH_XYZ_4:batch_xyz_4_tensor"
+input_stream: "BATCH_FEATURE:batch_feature_tensor"
+output_stream: "PROB_LOGITS:softmax_linear"
+node_options {
+    [type.googleapis.com/mediapipe.TensorFlowInferenceCalculatorOptions] {
+    batch_size: 1
+    add_batch_dim_to_tensors: false
+    }
+}
+}
+
+
+# Side packet that creates a tensorflow session
+node {
+calculator: "TensorFlowSessionFromSavedModelCalculator"
+output_side_packet: "SESSION:tf_model"
+node_options {
+    [type.googleapis.com/mediapipe.TensorFlowSessionFromSavedModelCalculatorOptions] {
+        saved_model_path : "mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/"
+    }
+}
+}

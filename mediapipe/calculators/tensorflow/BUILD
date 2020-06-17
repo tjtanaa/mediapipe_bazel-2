@@ -1139,3 +1139,166 @@ filegroup(
         "testdata/tensorflow_saved_model/00000000/variables/variables.index",
     ],
 )
+
+
+filegroup(
+    name = "test_saved_model_cifar10",
+    srcs = [
+        "testdata/tensorflow_saved_model/00000001/saved_model.pb",
+        "testdata/tensorflow_saved_model/00000001/variables/variables.data-00000-of-00001",
+        "testdata/tensorflow_saved_model/00000001/variables/variables.index",
+    ],
+)
+
+cc_test(
+    name = "tensorflow_session_from_saved_model_calculator_test_cifar10",
+    srcs = ["tensorflow_session_from_saved_model_calculator_test_cifar10.cc"],
+    data = [":test_saved_model_cifar10"],
+    linkstatic = 1,
+    deps = [
+        ":tensorflow_inference_calculator",
+        ":tensorflow_session",
+        ":tensorflow_session_from_saved_model_calculator",
+        ":tensorflow_session_from_saved_model_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/core:all_kernels",
+        "@org_tensorflow//tensorflow/core:direct_session",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_features2d",
+        "//mediapipe/framework/port:opencv_calib3d",
+    ],
+)
+
+
+
+
+filegroup(
+    name = "test_saved_model_randlanet",
+    srcs = [
+        "testdata/tensorflow_saved_model/RandLA-Net_builder/saved_model.pb",
+        "testdata/tensorflow_saved_model/RandLA-Net_builder/variables/variables.data-00000-of-00002",
+        "testdata/tensorflow_saved_model/RandLA-Net_builder/variables/variables.data-00001-of-00002",
+        "testdata/tensorflow_saved_model/RandLA-Net_builder/variables/variables.index"
+    ],
+)
+
+filegroup(
+    name = "test_saved_model_randlanet_v2",
+    srcs = [
+        "testdata/tensorflow_saved_model/RandLA-Net_builder_v2/saved_model.pb",
+        "testdata/tensorflow_saved_model/RandLA-Net_builder_v2/variables/variables.data-00000-of-00002",
+        "testdata/tensorflow_saved_model/RandLA-Net_builder_v2/variables/variables.data-00001-of-00002",
+        "testdata/tensorflow_saved_model/RandLA-Net_builder_v2/variables/variables.index"
+    ],
+
+    visibility = ["//visibility:public"],
+)
+
+
+
+proto_library(
+    name = "point_cloud_to_randlanet_format_calculator_options_proto",
+    srcs = ["point_cloud_to_randlanet_format_calculator_options.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "point_cloud_to_randlanet_format_calculator_options_cc_proto",
+    srcs = ["point_cloud_to_randlanet_format_calculator_options.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":point_cloud_to_randlanet_format_calculator_options_proto"],
+)
+
+cc_library(
+    name = "point_cloud_to_randlanet_format_calculator",
+    srcs = ["point_cloud_to_randlanet_format_calculator.cc"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//mediapipe/calculators/tensorflow/tensorflow_nearest_neighbor/cc/kernels:knn",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework/port:status",
+        "//mediapipe/framework/port:ret_check",
+        "@org_tensorflow//tensorflow/core:framework",
+        ":point_cloud_to_randlanet_format_calculator_options_cc_proto"
+    ],
+    alwayslink = 1,
+)
+
+
+cc_test(
+    name = "point_cloud_to_randlanet_format_calculator_test",
+    srcs = ["point_cloud_to_randlanet_format_calculator_test.cc"],
+    linkstatic = 1,
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/core:all_kernels",
+        "@org_tensorflow//tensorflow/core:direct_session",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_features2d",
+        "//mediapipe/framework/port:opencv_calib3d",
+        
+        "//mediapipe/calculators/tensorflow/tensorflow_nearest_neighbor/cc/kernels:knn",
+        ":point_cloud_to_randlanet_format_calculator",
+    ],
+)
+
+
+cc_test(
+    name = "tensorflow_session_from_saved_model_calculator_test_randlanet",
+    srcs = ["tensorflow_session_from_saved_model_calculator_test_randlanet.cc"],
+    data = [":test_saved_model_randlanet_v2"],
+    linkstatic = 1,
+    deps = [
+        ":tensorflow_inference_calculator",
+        ":tensorflow_session",
+        ":tensorflow_session_from_saved_model_calculator",
+        ":tensorflow_session_from_saved_model_calculator_cc_proto",
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/core:all_kernels",
+        "@org_tensorflow//tensorflow/core:direct_session",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_features2d",
+        "//mediapipe/framework/port:opencv_calib3d",
+        "//mediapipe/calculators/tensorflow/tensorflow_nearest_neighbor/cc/kernels:knn",
+        ":point_cloud_to_randlanet_format_calculator",
+    ],
+)
+

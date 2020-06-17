@@ -1,12 +1,12 @@
 ## Running on GPUs
 
--   [Overview](#overview)
--   [OpenGL ES Support](#opengl-es-support)
--   [Disable OpenGL ES Support](#disable-opengl-es-support)
--   [OpenGL ES Setup on Linux Desktop](#opengl-es-setup-on-linux-desktop)
--   [TensorFlow CUDA Support and Setup on Linux Desktop](#tensorflow-cuda-support-and-setup-on-linux-desktop)
--   [Life of a GPU Calculator](#life-of-a-gpu-calculator)
--   [GpuBuffer to ImageFrame Converters](#gpubuffer-to-imageframe-converters)
+- [Overview](#overview)
+- [OpenGL ES Support](#opengl-es-support)
+- [Disable OpenGL ES Support](#disable-opengl-es-support)
+- [OpenGL ES Setup on Linux Desktop](#opengl-es-setup-on-linux-desktop)
+- [TensorFlow CUDA Support and Setup on Linux Desktop](#tensorflow-cuda-support-and-setup-on-linux-desktop)
+- [Life of a GPU Calculator](#life-of-a-gpu-calculator)
+- [GpuBuffer to ImageFrame Converters](#gpubuffer-to-imageframe-converters)
 
 ### Overview
 
@@ -14,16 +14,16 @@ MediaPipe supports calculator nodes for GPU compute and rendering, and allows co
 
 GPU support is essential for good performance on mobile platforms, especially for real-time video. MediaPipe enables developers to write GPU compatible calculators that support the use of GPU for:
 
-   * On-device real-time processing, not just batch processing
-   * Video rendering and effects, not just analysis
+- On-device real-time processing, not just batch processing
+- Video rendering and effects, not just analysis
 
 Below are the design principles for GPU support in MediaPipe
 
-   * GPU-based calculators should be able to occur anywhere in the graph, and not necessarily be used for on-screen rendering.
-   * Transfer of frame data from one GPU-based calculator to another should be fast, and not incur expensive copy operations.
-   * Transfer of frame data between CPU and GPU should be as efficient as the platform allows.
-   * Because different platforms may require different techniques for best performance, the API should allow flexibility in the way things are implemented behind the scenes.
-   * A calculator should be allowed maximum flexibility in using the GPU for all or part of its operation, combining it with the CPU if necessary.
+- GPU-based calculators should be able to occur anywhere in the graph, and not necessarily be used for on-screen rendering.
+- Transfer of frame data from one GPU-based calculator to another should be fast, and not incur expensive copy operations.
+- Transfer of frame data between CPU and GPU should be as efficient as the platform allows.
+- Because different platforms may require different techniques for best performance, the API should allow flexibility in the way things are implemented behind the scenes.
+- A calculator should be allowed maximum flexibility in using the GPU for all or part of its operation, combining it with the CPU if necessary.
 
 ### OpenGL ES Support
 
@@ -89,7 +89,7 @@ OpenGL ES profile shading language version string: OpenGL ES GLSL ES 3.20
 OpenGL ES profile extensions:
 ```
 
-*Notice the ES 3.20 text above.*
+_Notice the ES 3.20 text above._
 
 You need to see ES 3.1 or greater printed in order to perform TFLite inference
 on GPU in MediaPipe. With this setup, build with:
@@ -118,6 +118,13 @@ To enable TensorFlow GPU inference with MediaPipe, the first step is to follow
 the
 [TensorFlow GPU documentation](https://www.tensorflow.org/install/gpu#software_requirements)
 to install the required NVIDIA software on your Linux desktop.
+
+IMPORTANT NOTES:
+
+- TESTED ON:
+- UBUNTU 18.04LTS
+- Cuda toolkit has to be installed through the run file, not DEB. Or the 'cublas_api.h' headers are not found.
+- Moreover, compile using `gcc5` and `g++5`. `gcc7`, `gcc8` and `g++7`, `g++8` will causes compilation error as `stdlib.h` is not found due to the flag `-isystem` that is automatically append to the front of all build commands.
 
 After installation, update `$PATH` and `$LD_LIBRARY_PATH` and run `ldconfig`
 with:
@@ -296,11 +303,11 @@ REGISTER_CALCULATOR(LuminanceCalculator);
 The design principles mentioned above have resulted in the following design
 choices for MediaPipe GPU support:
 
-   * We have a GPU data type, called `GpuBuffer`, for representing image data, optimized for GPU usage. The exact contents of this data type are opaque and platform-specific.
-   * A low-level API based on composition, where any calculator that wants to make use of the GPU creates and owns an instance of the `GlCalculatorHelper` class. This class offers a platform-agnostic API for managing the OpenGL context, setting up textures for inputs and outputs, etc.
-   * A high-level API based on subclassing, where simple calculators implementing image filters subclass from `GlSimpleCalculator` and only need to override a couple of virtual methods with their specific OpenGL code, while the superclass takes care of all the plumbing.
-   * Data that needs to be shared between all GPU-based calculators is provided as a external input that is implemented as a graph service and is managed by the `GlCalculatorHelper` class.
-   * The combination of calculator-specific helpers and a shared graph service allows us great flexibility in managing the GPU resource: we can have a separate context per calculator, share a single context, share a lock or other synchronization primitives, etc. -- and all of this is managed by the helper and hidden from the individual calculators.
+- We have a GPU data type, called `GpuBuffer`, for representing image data, optimized for GPU usage. The exact contents of this data type are opaque and platform-specific.
+- A low-level API based on composition, where any calculator that wants to make use of the GPU creates and owns an instance of the `GlCalculatorHelper` class. This class offers a platform-agnostic API for managing the OpenGL context, setting up textures for inputs and outputs, etc.
+- A high-level API based on subclassing, where simple calculators implementing image filters subclass from `GlSimpleCalculator` and only need to override a couple of virtual methods with their specific OpenGL code, while the superclass takes care of all the plumbing.
+- Data that needs to be shared between all GPU-based calculators is provided as a external input that is implemented as a graph service and is managed by the `GlCalculatorHelper` class.
+- The combination of calculator-specific helpers and a shared graph service allows us great flexibility in managing the GPU resource: we can have a separate context per calculator, share a single context, share a lock or other synchronization primitives, etc. -- and all of this is managed by the helper and hidden from the individual calculators.
 
 ### GpuBuffer to ImageFrame Converters
 
@@ -310,6 +317,6 @@ When possible, these calculators use platform-specific functionality to share da
 
 The below diagram shows the data flow in a mobile application that captures video from the camera, runs it through a MediaPipe graph, and renders the output on the screen in real time. The dashed line indicates which parts are inside the MediaPipe graph proper. This application runs a Canny edge-detection filter on the CPU using OpenCV, and overlays it on top of the original video using the GPU.
 
-| ![How GPU calculators interact](images/gpu_example_graph.png) |
-|:--:|
-| *Video frames from the camera are fed into the graph as `GpuBuffer` packets. The input stream is accessed by two calculators in parallel. `GpuBufferToImageFrameCalculator` converts the buffer into an `ImageFrame`, which is then sent through a grayscale converter and a canny filter (both based on OpenCV and running on the CPU), whose output is then converted into a `GpuBuffer` again. A multi-input GPU calculator, GlOverlayCalculator, takes as input both the original `GpuBuffer` and the one coming out of the edge detector, and overlays them using a shader. The output is then sent back to the application using a callback calculator, and the application renders the image to the screen using OpenGL.* |
+|                                                                                                                                                                                                                                                                                                                                  ![How GPU calculators interact](images/gpu_example_graph.png)                                                                                                                                                                                                                                                                                                                                   |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| _Video frames from the camera are fed into the graph as `GpuBuffer` packets. The input stream is accessed by two calculators in parallel. `GpuBufferToImageFrameCalculator` converts the buffer into an `ImageFrame`, which is then sent through a grayscale converter and a canny filter (both based on OpenCV and running on the CPU), whose output is then converted into a `GpuBuffer` again. A multi-input GPU calculator, GlOverlayCalculator, takes as input both the original `GpuBuffer` and the one coming out of the edge detector, and overlays them using a shader. The output is then sent back to the application using a callback calculator, and the application renders the image to the screen using OpenGL._ |
